@@ -5,6 +5,10 @@ date: "Monday, July 13, 2015"
 output: pdf_document
 ---
 
+
+
+
+
 You work for Motor Trend, a magazine about the automobile industry. Looking at a data set of a collection of cars, they are interested in exploring the relationship between a set of variables and miles per gallon (MPG) (outcome). They are particularly interested in the following two questions:
 
 “Is an automatic or manual transmission better for MPG”
@@ -27,8 +31,20 @@ Did the student answer the questions of interest or detail why the question(s) i
 Did the student do a residual plot and some diagnostics?
 Did the student quantify the uncertainty in their conclusions and/or perform an inference correctly?
 
+```{r global_options, include=FALSE}
+# Set global options
+knitr::opts_chunk$set(fig.width=6, fig.height=4, echo=TRUE)
 
-```{r, load_dataset, echo=FALSE}
+# set global chunk options
+#opts_chunk$set(fig.path='figure/minimal-', fig.align='center', fig.show='hold')
+#options(replace.assign=TRUE,width=90)
+
+```
+
+
+
+```{r, echo=FALSE}
+library(xtable)
 library(ggplot2)
 data(mtcars)
 ```
@@ -36,17 +52,58 @@ data(mtcars)
 
 # Executive Summary
 
+Intuitively, cars with larger weights have less miles per gallon.
 For figures, please refer to Appendix 1: Figures.
+
+
+# Data Overview
+
+describe fields here
+
+A data frame with 32 observations on 11 variables.
+
+```{r, results = 'asis'}
+xtable(head(mtcars, 4), caption = "The first entries of the mtcars table")
+```
+
+
 
 
 # Exploratory Analysis
 
-Sneak peek:
-```{r}
-head(mtcars, 2)
-```
 
 See figure 1.
+
+
+First, fit an univariate model where the MPG is predicted by the transmission type alone. This provides a benchmark model against which other models can be evaluated. 
+
+```{r}
+fit0 <- lm(mpg ~ am, data = mtcars)
+summary(fit0)$coefficients
+```
+
+This model is .. and with and `R-squared` of explains `r summary(fit0)$r.squared` of the variance. 
+
+
+```{r}
+fit1 <- lm(mpg ~ am + wt, data = mtcars)
+summary(fit1)$coefficients
+```
+
+This model is .. and with and `R-squared` of explains already `r summary(fit1)$r.squared` of the variance. 
+
+When comparing the two models
+
+```{r} 
+anova(fit0, fit1)
+```
+
+
+
+
+The residual plot shows..
+
+
 
 
 # Conclusion
@@ -54,44 +111,148 @@ See figure 1.
 
 
 
+
+
+
 You can also embed plots, for example:
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, eval=FALSE}
 plot(mtcars)
 plot(mtcars$am, mtcars$mpg, pch=19, col="blue")
 
 
-mpg <- mtcars$mpg
-am <- factor(mtcars$am)
 
-#boxplot(mpg ~ am, xlab="Transmission (0 = Automatic, 1 = Manual)", ylab="MPG",main="Boxplot of MPG vs. Transmission")
 
-ggplot(mtcars, aes(x=factor(am), y=mpg)) + 
+ggplot(mtcars, aes(x=am, y=mpg)) + 
     geom_boxplot() +
     labs(title = "MPG vs. transmission") + 
-    labs(x = "Transmission (0 = automatic, 1 = manual)") + 
-    labs(y = "MPG") + 
+    xlab("Transmission (0 = automatic, 1 = manual)") + 
+    ylab("MPG") +
+    geom_point(size = 5, colour = "blue", alpha = 0.2) +
+    geom_smooth(method = "lm", colour = "red")
+    theme_minimal(base_family = "", base_size = 12) 
+
+# fit mpg as function of am
+fit <- lm(mpg ~ am, data = mtcars)
+coef(fit)
+summary(fit)
+summary(fit)$sigma # residual standard error
+# residuals
+e <- resid(fit)
+e
+#
+yhat <- predict(fit)
+yhat
+# largest difference
+max(abs(e - (mtcars$mpg - yhat)))
+#should be (close to) zero
+sum(e)
+plot(e)
+
+
+# residual plot = variation around the regression line
+#mtcars$e <- resid(lm(mpg ~ am, data = mtcars))
+#mtcars$e
+ggplot(mtcars, aes(x = am, y = e)) + 
+    geom_hline(yintercept = 0, size = 2) +
+    geom_point(size = 5, colour = "red", alpha = 0.2) +
+    labs(title = "MPG vs. transmission residual plot") + 
+    xlab("Transmission (0 = automatic, 1 = manual)") + 
+    ylab("residual") +
     theme_minimal(base_family = "", base_size = 12) 
 
 
+# residual plot 2
+e = c(resid(lm(mpg ~ 1, data = mtcars)),
+      resid(lm(mpg ~ am, data = mtcars)))
+fit = factor(c(rep("Itc", nrow(mtcars)),
+               rep("Itc, slope", nrow(mtcars))))
+ggplot(data.frame(e = e, fit = fit), aes(x = fit, y = e, fill = fit)) + 
+    geom_dotplot(binaxis = "y", size = 2, stackdir = "center", binwidth = 1) +
+    labs(title = "MPG vs. transmission residual plot") + 
+    xlab("Fitting approach") + 
+    ylab("Residual MPG") +
+    theme_minimal(base_family = "", base_size = 12) 
 
+
+sumCoef <- summary(fit)$coefficients
+sumCoef[1,1] + c(-1, 1) * qt(.975, df = fit$df) * sumCoef[1,2]
+sumCoef[2,1] + c(-1, 1) * qt(.975, df = fit$df) * sumCoef[2,2]
+# with a 95% confidence, estimate that an 1.0 increase of am?? leads to an increase of 3.6-10.8 MPG
+   
+
+
+
+#library(datasets); data(swiss); require(stats); require(graphics)
+pairs(mtcars, panel = panel.smooth, main = "mtcars data", col = 3 + (mtcars$am > 0))
+pairs(mtcars, panel = panel.smooth, main = "mtcars data", bg = c("red", "green3")[unclass(mtcars$am)])
+
+ 
+
+
+summary(lm(mpg ~ . , data = mtcars))
+
+summary(lm(mpg ~ wt, data = mtcars))$coefficients
+
+summary(lm(mpg ~ am - 1, data = mtcars))$coefficients
+
+plot(mtcars$wt,mtcars$mpg,pch=19)
+points(mtcars$wt,mtcars$mpg,pch=19,col=((mtcars$am==0)*1+1))
+
+?mtcars
+
+fit1<-lm(mpg~am,data=mtcars)
+a<-summary(fit1)$cov.unscaled[2,2]
+fit2<-update(fit1,mpg~am+wt)
+fit3<-update(fit1,mpg~am+wt+cyl)
+fit4<-update(fit1,mpg~am+wt+cyl+disp)
+fit5<-update(fit1,mpg~am+wt+cyl+disp+qsec)
+fit6<-update(fit1,mpg~am+wt+cyl+disp+qsec+gear)
+fit7<-update(fit1,mpg~am+wt+cyl+disp+qsec+gear+carb)
+fit8<-update(fit1,mpg~am+wt+cyl+disp+qsec+gear+carb+hp)
+fit9<-update(fit1,mpg~am+wt+cyl+disp+qsec+gear+carb+hp+drat)
+c(summary(fit2)$cov.unscaled[2,2],
+summary(fit3)$cov.unscaled[2,2])/a
+
+anova(fit1,fit2,fit3,fit4,fit5,fit6, fit7, fit8, fit9)
+fit6
 
 ```
 
 
 # Appendix 1: Figures
 
-Figure 1. Boxplot of MPG vs. number of cylinders per transmission type
-```{r}
-# Prepare vector for labelling panels
-labels <- c("0" = "Automatic", "1" = "Manual")
-
-ggplot(mtcars, aes(x=factor(cyl), y=mpg)) + 
-    facet_grid(am ~ ., labeller = labeller(am = labels)) + 
+## Figure 1. Boxplot of MPG per transmission type
+```{r, boxplot}
+ggplot(mtcars, aes(factor(am), mpg)) + 
     geom_boxplot() +
-    labs(title = "MPG vs. number of cylinders (per transmission type)") + 
-    labs(x = "Number of cylinders") + 
-    labs(y = "MPG") + 
+    geom_point(size = 5, aes(colour = factor(am)), alpha = 0.6) +
+    labs(title = "MPG per transmission type") + 
+    xlab("Transmission type (0 = Automatic, 1 = Manual)") + 
+    ylab("Miles/(US) gallon") +
     theme_minimal(base_family = "") 
+```
+
+## Figure 2. Regression line
+```{r, regression}
+ggplot(mtcars, aes(wt, mpg)) + 
+    geom_point(size = 5, aes(colour = factor(am)), alpha = 0.6) +
+    stat_smooth(method = "lm", se = FALSE) +
+    ggtitle("MPG per weight") + 
+    xlab("Weight (lb/1000)") + 
+    ylab("Miles/(US) gallon") +
+    theme_minimal(base_family = "") 
+```
+
+## Figure 3. Residual plot 
+```{r, residualplot}
+# residual plot = variation around the regression line
+ggplot(mtcars, aes(wt, resid(fit1))) + 
+    geom_hline(yintercept = 0, size = 2) +
+    geom_point(size = 5, aes(colour = factor(am)), alpha = 0.6) +
+    ggtitle("MPG vs. weight residual plot") + 
+    xlab("Weight (lb/1000)") + 
+    ylab("Residual") +
+    theme_minimal(base_family = "", base_size = 12) 
 ```
 
