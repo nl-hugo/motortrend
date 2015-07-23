@@ -82,7 +82,7 @@ Indeed, the weight appears to be a good predictor as indicated by the very small
 
 Another interesting observation is that one can see from the `p-values` in both models that holding the weight constant, transmission type appears to much have less of an impact on MPG than if weight is disregarded. This suggests that the weight of a car is far more important with respect to MPG than its transmission type. 
 
-After trying several other variables, `qsec` was selected as third argument in the model under the reasoning is that the faster the car, the higher its fuel consumption and thus the less MPG. Table 3 lists the variance table for the three models.
+After trying several other variables, `qsec` was selected as third argument in the model under the reasoning is that the faster the car, the higher its fuel consumption and thus the less MPG. Table 4 lists the variance table for the three models.
 
 ```{r}
 fit2 <- lm(mpg ~ am + wt + qsec, data = mtcars)
@@ -92,7 +92,7 @@ fit2 <- lm(mpg ~ am + wt + qsec, data = mtcars)
 xtable(anova(fit0, fit1, fit2), caption = "Analysis of variance tables for the three models.", digits=c(0,0,2,1,2,2,6))
 ```
 
-Figure 3 shows some minor residual heteroskedacity and the distribution plot of the residuals of manual cars (figure 4) shows a slight shift just to the left of the mean, indicating that the residuals of the regression do not appear biased with mean close to 0. 
+Figure 3 shows some minor residual heteroskedacity and the distribution plot of the residuals of manual cars (Figure 4) shows a slight shift just to the left of the mean, indicating that the residuals of the regression do not appear biased with mean close to 0. 
 
 
 
